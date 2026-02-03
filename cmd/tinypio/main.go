@@ -124,6 +124,84 @@ do_zero:
     out pins, 1  side 0 [1]  ; Write data, clock low
     nop          side 1 [1]  ; Clock high`,
 	},
+	{
+		Name:        "uart_tx",
+		Description: "UART transmit (8N1)",
+		Source: `.program uart_tx
+.side_set 1 opt
+    pull       side 1 [7]  ; Wait for data, line idle high
+    set x, 7   side 0 [7]  ; Start bit, init bit counter
+bitloop:
+    out pins, 1            ; Shift out data bit
+    jmp x--, bitloop [6]   ; Loop 8 times
+    nop        side 1 [6]  ; Stop bit`,
+	},
+	{
+		Name:        "pwm",
+		Description: "PWM output with variable duty cycle",
+		Source: `.program pwm
+.side_set 1 opt
+    pull noblock   side 0  ; Pull duty cycle, keep low
+    mov x, osr             ; Copy to x
+    mov y, isr             ; y = period (preloaded)
+countloop:
+    jmp x!=y, skip         ; Skip if x != y
+    nop            side 1  ; Set output high at threshold
+skip:
+    jmp y--, countloop     ; Decrement y, loop until 0`,
+	},
+	{
+		Name:        "blink",
+		Description: "Classic LED blink with configurable timing",
+		Source: `.program blink
+    pull block     ; Get delay count from FIFO
+    mov y, osr     ; Save delay to y
+lp1:
+    set pins, 1    ; LED on
+    mov x, y       ; Load delay counter
+delay1:
+    jmp x--, delay1 [31]  ; Delay loop
+    set pins, 0    ; LED off
+    mov x, y       ; Load delay counter
+delay2:
+    jmp x--, delay2 [31]  ; Delay loop
+    jmp lp1        ; Repeat`,
+	},
+	{
+		Name:        "stepper",
+		Description: "4-phase stepper motor driver",
+		Source: `.program stepper
+    pull block          ; Get step count
+    mov x, osr          ; x = steps remaining
+step_loop:
+    set pins, 0b0001    ; Phase A
+    jmp delay
+    set pins, 0b0010    ; Phase B
+    jmp delay
+    set pins, 0b0100    ; Phase C
+    jmp delay
+    set pins, 0b1000    ; Phase D
+delay:
+    nop [31]            ; Delay between phases
+    jmp x--, step_loop  ; Next step`,
+	},
+	{
+		Name:        "i2c",
+		Description: "I2C bit-banging (simplified)",
+		Source: `.program i2c
+.side_set 1 opt
+do_byte:
+    set x, 7               ; 8 bits per byte
+bitloop:
+    out pins, 1    [7]     ; SDA = data bit
+    nop            side 1 [2]  ; SCL high
+    nop            side 0 [7]  ; SCL low
+    jmp x--, bitloop       ; Next bit
+    set pindirs, 0 [7]     ; Release SDA for ACK
+    nop            side 1 [2]  ; Clock ACK
+    in pins, 1             ; Read ACK bit
+    nop            side 0     ; SCL low`,
+	},
 }
 
 func main() {
@@ -433,6 +511,11 @@ Powered by <a href="https://github.com/tinygo-org/pio">TinyGo PIO</a>.</p>
   <button onclick="loadExample('squarewave')">Square Wave</button>
   <button onclick="loadExample('ws2812')">WS2812</button>
   <button onclick="loadExample('spi_tx')">SPI TX</button>
+  <button onclick="loadExample('uart_tx')">UART TX</button>
+  <button onclick="loadExample('pwm')">PWM</button>
+  <button onclick="loadExample('blink')">Blink</button>
+  <button onclick="loadExample('stepper')">Stepper</button>
+  <button onclick="loadExample('i2c')">I2C</button>
 </div>
 
 <textarea id="source" placeholder="Paste PIO assembly here..."></textarea>
