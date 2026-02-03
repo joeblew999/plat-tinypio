@@ -1,0 +1,45 @@
+# pioasm tasks - PIO Assembler from pico-sdk
+version: "3"
+
+tasks:
+  check:
+    desc: Check if pioasm is installed
+    cmds:
+      - |
+        if command -v pioasm &> /dev/null; then
+          echo "pioasm found: $(which pioasm)"
+          pioasm --version 2>/dev/null || true
+        else
+          echo "pioasm not found. Run 'xplat task pioasm:install' to install."
+          exit 1
+        fi
+
+  install:
+    desc: Install pioasm from pico-sdk
+    cmds:
+      - |
+        set -e
+        mkdir -p .src
+        if [ ! -d ".src/pico-sdk" ]; then
+          echo "Cloning pico-sdk..."
+          git clone --depth 1 https://github.com/raspberrypi/pico-sdk.git .src/pico-sdk
+        fi
+        echo "Building pioasm..."
+        cd .src/pico-sdk/tools/pioasm
+        cmake -B build .
+        cmake --build build
+        echo ""
+        echo "pioasm built at: $(pwd)/build/pioasm"
+        echo ""
+        echo "To install system-wide, run:"
+        echo "  sudo cp $(pwd)/build/pioasm /usr/local/bin/"
+        echo ""
+        echo "Or add to PATH:"
+        echo "  export PATH=\"$(pwd)/build:\$PATH\""
+
+  install-global:
+    desc: Install pioasm to /usr/local/bin (requires sudo)
+    deps: [install]
+    cmds:
+      - sudo cp .src/pico-sdk/tools/pioasm/build/pioasm /usr/local/bin/
+      - echo "pioasm installed to /usr/local/bin/pioasm"
