@@ -16,7 +16,7 @@ PIO development toolkit for RP2040/RP2350 microcontrollers.
 2. **Compile to hex/Go** - Full pioasm compilation when you need it
 3. **Browse drivers** - Ready-to-use TinyGo drivers for common protocols
 
-Built on [tinygo-org/pio](https://github.com/tinygo-org/pio) - the Go library for PIO development.
+Built on [tinygo-org/pio](https://github.com/tinygo-org/pio) - the Go library for PIO development. Thanks to [@soypat](https://github.com/soypat) for creating and maintaining the upstream library.
 
 ## Try It
 
