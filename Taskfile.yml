@@ -43,7 +43,8 @@ tasks:
   build:
     desc: Build the binary
     cmds:
-      - go build -o {{ .BINARY }} {{ .MAIN }}
+      - mkdir -p .bin
+      - go build -o .bin/{{ .BINARY }} {{ .MAIN }}
 
   test:
     desc: Run tests
@@ -58,7 +59,7 @@ tasks:
   clean:
     desc: Clean build artifacts
     cmds:
-      - rm -f {{ .BINARY }}
+      - rm -rf .bin/
 
   install:
     desc: Install to GOBIN
@@ -72,7 +73,7 @@ tasks:
       - '{{ .MAIN }}/**/*.go'
       - go.mod
     cmds:
-      - ./{{ .BINARY }}
+      - ./.bin/{{ .BINARY }}
 
   dev:
     desc: Build and run with hot reload (watches for file changes)
