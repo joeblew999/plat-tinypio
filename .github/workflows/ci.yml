@@ -48,6 +48,8 @@ jobs:
         with:
           go-version: 'stable'
       - uses: joeblew999/xplat/.github/actions/setup@main
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build
         run: xplat task build
@@ -113,6 +115,8 @@ jobs:
           go-version: 'stable'
 
       - uses: joeblew999/xplat/.github/actions/setup@main
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build docs
         run: xplat docs build
