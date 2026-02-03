@@ -4,10 +4,14 @@ kind: Package
 
 name: plat-tinypio
 version: main
-description: pio system driven by xplat
+description: PIO assembly validator powered by TinyGo's pio library
 author: joeblew999
 license: MIT
 language: go
+
+upstream:
+  repo: https://github.com/tinygo-org/pio
+  ref: main
 
 binary:
   name: tinypio
