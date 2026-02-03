@@ -313,7 +313,7 @@ func compilePIO(source, format string) CompileResult {
 	if pioasmPath == "" {
 		return CompileResult{
 			Success: false,
-			Errors:  []string{"pioasm not found. Run: task -t taskfiles/Taskfile.pioasm.yml install"},
+			Errors:  []string{"pioasm not found. Run: xplat task pioasm:build"},
 		}
 	}
 

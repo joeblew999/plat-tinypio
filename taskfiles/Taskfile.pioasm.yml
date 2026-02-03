@@ -1,40 +1,32 @@
-# pioasm tasks - PIO Assembler from pico-sdk
+# pioasm - PIO Assembler from pico-sdk
 version: "3"
 
-tasks:
-  check:
-    desc: Check if pioasm is available
-    cmds:
-      - |
-        if [ -f ".bin/pioasm" ]; then
-          echo "pioasm found: .bin/pioasm"
-        elif command -v pioasm &> /dev/null; then
-          echo "pioasm found: $(which pioasm)"
-        else
-          echo "pioasm not found. Run 'task -t taskfiles/Taskfile.pioasm.yml install'"
-          exit 1
-        fi
+vars:
+  PIOASM_BIN: .bin/pioasm
+  PIOASM_SRC: .src/pico-sdk
+  PIOASM_REPO: https://github.com/raspberrypi/pico-sdk.git
 
-  install:
-    desc: Build pioasm from pico-sdk into .bin/
+tasks:
+  default:
+    desc: Build pioasm if not present
     cmds:
-      - |
-        set -e
-        mkdir -p .src .bin
-        if [ ! -d ".src/pico-sdk" ]; then
-          echo "Cloning pico-sdk..."
-          git clone --depth 1 https://github.com/raspberrypi/pico-sdk.git .src/pico-sdk
-        fi
-        echo "Building pioasm..."
-        cd .src/pico-sdk/tools/pioasm
-        cmake -B build .
-        cmake --build build
-        cp build/pioasm ../../../../.bin/
-        echo "pioasm installed to .bin/pioasm"
+      - task: pioasm:build
+    status:
+      - test -f {{.PIOASM_BIN}}
+
+  build:
+    desc: Build pioasm from pico-sdk
+    cmds:
+      - mkdir -p .src .bin
+      - git clone --depth 1 {{.PIOASM_REPO}} {{.PIOASM_SRC}}
+      - cmake -B {{.PIOASM_SRC}}/tools/pioasm/build {{.PIOASM_SRC}}/tools/pioasm
+      - cmake --build {{.PIOASM_SRC}}/tools/pioasm/build
+      - cp {{.PIOASM_SRC}}/tools/pioasm/build/pioasm {{.PIOASM_BIN}}
+    status:
+      - test -f {{.PIOASM_BIN}}
 
   clean:
     desc: Remove pioasm and pico-sdk
     cmds:
-      - rm -f .bin/pioasm
-      - rm -rf .src/pico-sdk
-      - echo "Cleaned pioasm"
+      - rm -f {{.PIOASM_BIN}}
+      - rm -rf {{.PIOASM_SRC}}
