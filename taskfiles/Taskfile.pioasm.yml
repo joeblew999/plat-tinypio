@@ -3,23 +3,24 @@ version: "3"
 
 tasks:
   check:
-    desc: Check if pioasm is installed
+    desc: Check if pioasm is available
     cmds:
       - |
-        if command -v pioasm &> /dev/null; then
+        if [ -f ".bin/pioasm" ]; then
+          echo "pioasm found: .bin/pioasm"
+        elif command -v pioasm &> /dev/null; then
           echo "pioasm found: $(which pioasm)"
-          pioasm --version 2>/dev/null || true
         else
-          echo "pioasm not found. Run 'xplat task pioasm:install' to install."
+          echo "pioasm not found. Run 'task -t taskfiles/Taskfile.pioasm.yml install'"
           exit 1
         fi
 
   install:
-    desc: Install pioasm from pico-sdk
+    desc: Build pioasm from pico-sdk into .bin/
     cmds:
       - |
         set -e
-        mkdir -p .src
+        mkdir -p .src .bin
         if [ ! -d ".src/pico-sdk" ]; then
           echo "Cloning pico-sdk..."
           git clone --depth 1 https://github.com/raspberrypi/pico-sdk.git .src/pico-sdk
@@ -28,18 +29,12 @@ tasks:
         cd .src/pico-sdk/tools/pioasm
         cmake -B build .
         cmake --build build
-        echo ""
-        echo "pioasm built at: $(pwd)/build/pioasm"
-        echo ""
-        echo "To install system-wide, run:"
-        echo "  sudo cp $(pwd)/build/pioasm /usr/local/bin/"
-        echo ""
-        echo "Or add to PATH:"
-        echo "  export PATH=\"$(pwd)/build:\$PATH\""
+        cp build/pioasm ../../../../.bin/
+        echo "pioasm installed to .bin/pioasm"
 
-  install-global:
-    desc: Install pioasm to /usr/local/bin (requires sudo)
-    deps: [install]
+  clean:
+    desc: Remove pioasm and pico-sdk
     cmds:
-      - sudo cp .src/pico-sdk/tools/pioasm/build/pioasm /usr/local/bin/
-      - echo "pioasm installed to /usr/local/bin/pioasm"
+      - rm -f .bin/pioasm
+      - rm -rf .src/pico-sdk
+      - echo "Cleaned pioasm"

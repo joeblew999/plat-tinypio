@@ -282,11 +282,11 @@ func handleDrivers(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleStatus(w http.ResponseWriter, r *http.Request) {
-	pioasmPath, _ := exec.LookPath("pioasm")
+	pioasmPath := findPioasm()
 	status := map[string]interface{}{
-		"validator":     true,
-		"pioasm":        pioasmPath != "",
-		"pioasm_path":   pioasmPath,
+		"validator":   true,
+		"pioasm":      pioasmPath != "",
+		"pioasm_path": pioasmPath,
 		"drivers":       len(drivers),
 		"examples":      len(examples),
 		"upstream":      "github.com/tinygo-org/pio",
@@ -296,13 +296,24 @@ func handleStatus(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(status)
 }
 
+// findPioasm looks for pioasm in .bin/ first, then system PATH.
+func findPioasm() string {
+	// Check local .bin/ first
+	if _, err := os.Stat(".bin/pioasm"); err == nil {
+		return ".bin/pioasm"
+	}
+	// Fall back to system PATH
+	path, _ := exec.LookPath("pioasm")
+	return path
+}
+
 func compilePIO(source, format string) CompileResult {
 	// Check if pioasm is available
-	pioasmPath, err := exec.LookPath("pioasm")
-	if err != nil {
+	pioasmPath := findPioasm()
+	if pioasmPath == "" {
 		return CompileResult{
 			Success: false,
-			Errors:  []string{"pioasm not found. Install from: https://github.com/raspberrypi/pico-sdk/tree/master/tools/pioasm"},
+			Errors:  []string{"pioasm not found. Run: task -t taskfiles/Taskfile.pioasm.yml install"},
 		}
 	}
 
