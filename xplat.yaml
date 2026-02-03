@@ -4,7 +4,10 @@ kind: Package
 
 name: plat-tinypio
 version: main
-description: PIO assembly validator powered by TinyGo's pio library
+description: |
+  Comprehensive PIO development toolkit for RP2040/RP2350 microcontrollers.
+  Features: syntax validation, pioasm compilation, and ready-to-use drivers
+  from TinyGo's pio library (WS2812B, SPI, I2S, Parallel bus).
 author: joeblew999
 license: MIT
 language: go
@@ -12,11 +15,38 @@ language: go
 upstream:
   repo: https://github.com/tinygo-org/pio
   ref: main
+  description: TinyGo PIO library with Go assembler API and drivers
+
+features:
+  - name: validator
+    description: Fast PIO assembly syntax validation (no external dependencies)
+  - name: compiler
+    description: Full pioasm compilation to hex/Go (requires pioasm binary)
+  - name: drivers
+    description: Reference to tinygo-org/pio drivers (WS2812B, SPI, I2S, etc)
 
 binary:
   name: tinypio
   source:
     go: github.com/joeblew999/plat-tinypio/cmd/tinypio
+
+api:
+  endpoints:
+    - path: /api/validate
+      method: POST
+      description: Validate PIO assembly syntax
+    - path: /api/compile
+      method: POST
+      description: Compile PIO assembly with pioasm
+    - path: /api/examples
+      method: GET
+      description: Get example PIO programs
+    - path: /api/drivers
+      method: GET
+      description: List available PIO drivers
+    - path: /api/status
+      method: GET
+      description: Check toolkit capabilities
 
 processes:
   tinypio:
