@@ -7,11 +7,12 @@
 # Template: internal/templates/project/ci.yml.tmpl
 # ============================================================================
 #
-# Unified CI/CD workflow - build, test, and release
+# Unified CI/CD workflow - build, test, release, and deploy docs
 #
 # Triggers:
 #   - Push/PR to main: Build + Test + Lint
 #   - Tag push (v*): Build + Test + Release
+#   - Push to main with docs changes: Deploy to GitHub Pages
 
 name: CI
 
@@ -21,6 +22,17 @@ on:
     tags: ['v*']
   pull_request:
     branches: [main]
+
+# Permissions for GitHub Pages deployment
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+# Prevent concurrent Pages deployments
+concurrency:
+  group: pages-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   ci:
@@ -64,8 +76,6 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/v')
     needs: ci
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     steps:
       - uses: actions/checkout@v4
 
@@ -87,3 +97,35 @@ jobs:
             --title "${GITHUB_REF_NAME}" \
             --generate-release-notes \
             release/*
+
+  # GitHub Pages deployment (only on main branch push, not PRs or tags)
+  pages-build:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: ci
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Build with Jekyll
+        uses: actions/jekyll-build-pages@v1
+        with:
+          source: ./
+          destination: ./_site
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+
+  pages-deploy:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: pages-build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
