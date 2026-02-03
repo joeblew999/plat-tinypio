@@ -1,0 +1,25 @@
+# xplat.yaml - Package manifest for xplat ecosystem
+apiVersion: xplat/v1
+kind: Package
+
+name: plat-tinypio
+version: main
+description: pio system driven by xplat
+author: joeblew999
+license: MIT
+language: go
+
+binary:
+  name: tinypio
+  source:
+    go: github.com/joeblew999/plat-tinypio/cmd/tinypio
+
+processes:
+  tinypio:
+    command: task run
+    port: 8090
+    health_path: /health
+    dev_mode: true  # Hot reload: watches files and auto-rebuilds
+    readiness:
+      initial_delay: 3
+      period: 5
