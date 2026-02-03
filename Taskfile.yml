@@ -30,6 +30,9 @@ vars:
 env:
   GOWORK: off
 
+includes:
+  pioasm: ./taskfiles/Taskfile.pioasm.yml
+
 tasks:
   default:
     desc: Show available tasks
