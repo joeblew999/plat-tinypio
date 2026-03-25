@@ -1,32 +1,44 @@
-# pioasm - PIO Assembler from pico-sdk
+# pioasm - PIO Assembler pre-built binaries
+# Source: https://github.com/earlephilhower/pico-quick-toolchain
 version: "3"
 
 vars:
   PIOASM_BIN: .bin/pioasm
-  PIOASM_SRC: .src/pico-sdk
-  PIOASM_REPO: https://github.com/raspberrypi/pico-sdk.git
+  PIOASM_VERSION: "4.1.0"
+  PIOASM_COMMIT: "9fdfe11.250530"
+  PIOASM_BASE_URL: "https://github.com/earlephilhower/pico-quick-toolchain/releases/download/{{.PIOASM_VERSION}}"
 
 tasks:
   default:
-    desc: Build pioasm if not present
+    desc: Install pioasm if not present
     cmds:
-      - task: pioasm:build
+      - task: install
     status:
       - test -f {{.PIOASM_BIN}}
 
-  build:
-    desc: Build pioasm from pico-sdk
+  install:
+    desc: Download pre-built pioasm binary
     cmds:
-      - mkdir -p .src .bin
-      - git clone --depth 1 {{.PIOASM_REPO}} {{.PIOASM_SRC}}
-      - cmake -B {{.PIOASM_SRC}}/tools/pioasm/build {{.PIOASM_SRC}}/tools/pioasm
-      - cmake --build {{.PIOASM_SRC}}/tools/pioasm/build
-      - cp {{.PIOASM_SRC}}/tools/pioasm/build/pioasm {{.PIOASM_BIN}}
+      - mkdir -p .bin
+      - |
+        OS=$(uname -s)
+        ARCH=$(uname -m)
+        case "$OS-$ARCH" in
+          Darwin-arm64)  PLATFORM="aarch64-apple-darwin20.4" ;;
+          Darwin-x86_64) PLATFORM="x86_64-apple-darwin20.4" ;;
+          Linux-x86_64)  PLATFORM="x86_64-linux-gnu" ;;
+          Linux-aarch64) PLATFORM="aarch64-linux-gnu" ;;
+          Linux-armv7l)  PLATFORM="arm-linux-gnueabihf" ;;
+          *) echo "Unsupported platform: $OS-$ARCH"; exit 1 ;;
+        esac
+        URL="{{.PIOASM_BASE_URL}}/${PLATFORM}.pioasm-{{.PIOASM_COMMIT}}.tar.gz"
+        echo "Downloading pioasm from $URL"
+        curl -sL "$URL" | tar -xzf - --strip-components=1 -C .bin pioasm/pioasm
+        chmod +x {{.PIOASM_BIN}}
     status:
       - test -f {{.PIOASM_BIN}}
 
   clean:
-    desc: Remove pioasm and pico-sdk
+    desc: Remove pioasm binary
     cmds:
       - rm -f {{.PIOASM_BIN}}
-      - rm -rf {{.PIOASM_SRC}}
